@@ -1,4 +1,34 @@
 <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026-07-30 聊天记录</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#1a1a2e;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden}
+.pw-box{background:#16213e;border-radius:16px;padding:40px;width:360px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.pw-box h2{color:#eee;font-size:18px;margin-bottom:8px}
+.pw-box p{color:#888;font-size:13px;margin-bottom:24px}
+.pw-box input{width:100%;padding:12px 16px;border-radius:8px;border:1px solid #0f3460;background:#0d1b2a;color:#eee;font-size:15px;outline:none;text-align:center;margin-bottom:16px;transition:border-color .2s}
+.pw-box input:focus{border-color:#e94560}
+.pw-box button{width:100%;padding:12px;border-radius:8px;border:none;background:#e94560;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
+.pw-box button:hover{background:#c0392b}
+.pw-box .err{color:#e94560;font-size:12px;margin-top:8px;display:none}
+.main-content{display:none}
+</style>
+</head>
+<body>
+<div class="pw-box" id="pwBox">
+  <h2>🔐 访问受限</h2>
+  <p>请输入访问密码查看聊天记录</p>
+  <input type="password" id="pwInput" placeholder="输入密码" autofocus
+         onkeydown="if(event.key==='Enter')checkPw()">
+  <button onclick="checkPw()">确认</button>
+  <div class="err" id="pwErr">密码错误，请重试</div>
+</div>
+<div class="main-content" id="mainContent">
+<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2026-07-30 聊天记录查看器</title>
@@ -127,3 +157,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 <script src="https://coze-coding-project.tos.coze.site/cli_attachment/2026-07-31/1347361971907959_0cb84636de6ee3700a8b656fbd0e9ff5_chat_view_2026-07-30_data.js?sign=1785566000-4698e29dea-0-c671f1a4863f81753be1e2b8e24a023e25df117d6369c6b8d988f13cb260a039"></script>
 <script src="https://coze-coding-project.tos.coze.site/cli_attachment/2026-07-31/1347361971907959_a52ed7ddf2a736d5912de4d9ba948e90_chat_viewer.js?sign=1785566002-18b4a80eb6-0-1b2b898a1c3a70c254f2a3797c1163a657605781bc9cbf4779e59d5f9da7d72c"></script>
 </body></html>
+</div>
+<script>
+function checkPw(){
+  var pw=document.getElementById('pwInput').value;
+  // Simple obfuscation
+  var expected=atob('d29uZGVybGFi');
+  if(pw===expected){
+    document.getElementById('pwBox').style.display='none';
+    document.getElementById('mainContent').style.display='block';
+    // Initialize the chat viewer after showing
+    if(typeof initChatViewer==='function')initChatViewer();
+  } else {
+    document.getElementById('pwErr').style.display='block';
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwInput').focus();
+  }
+}
+</script>
+</body>
+</html>
