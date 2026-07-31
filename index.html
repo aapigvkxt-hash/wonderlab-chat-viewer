@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026-07-30 聊天记录查看器</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;display:flex;height:100vh;overflow:hidden}
+.sidebar{width:300px;background:#1a1a2e;color:#eee;display:flex;flex-direction:column;flex-shrink:0;border-right:1px solid #16213e}
+.sidebar-header{padding:16px;background:#16213e;border-bottom:1px solid #0f3460}
+.sidebar-header h2{font-size:15px;font-weight:600;margin-bottom:4px}
+.sidebar-header .sub{font-size:11px;color:#888}
+.search-box{padding:10px 12px;border-bottom:1px solid #16213e}
+.search-box input{width:100%;padding:8px 12px;border-radius:8px;border:none;background:#16213e;color:#eee;font-size:13px;outline:none}
+.search-box input::placeholder{color:#555}
+.search-box input:focus{background:#1a2744}
+.nutr-tabs{padding:8px;border-bottom:1px solid #16213e;display:flex;flex-wrap:wrap;gap:4px;max-height:200px;overflow-y:auto}
+.nutr-tab{padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;background:#16213e;transition:all .2s;white-space:nowrap}
+.nutr-tab:hover{background:#0f3460}
+.nutr-tab.active{background:#e94560;color:#fff}
+.conv-list{flex:1;overflow-y:auto}
+.conv-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid #16213e;transition:background .2s}
+.conv-item:hover{background:#16213e}
+.conv-item.active{background:#0f3460}
+.conv-id{font-size:11px;color:#aaa;word-break:break-all;margin-bottom:3px;line-height:1.3}
+.conv-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.conv-preview{color:#888;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge.valid{background:#27ae60;color:#fff}
+.badge.invalid{background:#555;color:#aaa}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.chat-header{padding:14px 20px;background:#fff;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;gap:12px}
+.avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;flex-shrink:0}
+.avatar.cust{background:#8e44ad}
+.info h3{font-size:14px;color:#2c3e50;word-break:break-all}
+.info p{font-size:12px;color:#888;margin-top:2px}
+.chat-body{flex:1;overflow-y:auto;padding:16px 20px;background:linear-gradient(135deg,#e8e0d5 0%,#ddd5c8 100%)}
+.msg-row{display:flex;margin-bottom:10px;align-items:flex-start;flex-wrap:nowrap}
+.msg-row.in{justify-content:flex-start}
+.msg-row.out{justify-content:flex-end}
+.bubble-wrap{display:flex;flex-direction:column;max-width:65%;min-width:0}
+.msg-row.in .bubble-wrap{margin-left:8px}
+.msg-row.out .bubble-wrap{margin-right:8px;align-items:flex-end}
+.msg-row.in{justify-content:flex-start}
+.msg-row.out{justify-content:flex-end}
+.msg-av{width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;color:#fff}
+.msg-row.in .msg-av{background:#8e44ad;margin-right:0}
+.msg-row.out .msg-av{background:#27ae60;margin-left:0;order:2}
+.bubble{padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.6;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
+.msg-row.in .bubble{background:#fff;color:#333;border-top-left-radius:2px}
+.msg-row.out .bubble{background:#95ec69;color:#333;border-top-right-radius:2px}
+.msg-time{font-size:10px;color:#999;margin-top:3px}
+.msg-row.in .msg-time{text-align:left;margin-left:40px}
+.msg-row.out .msg-time{text-align:right;margin-right:40px}
+.empty{display:flex;align-items:center;justify-content:center;height:100%;color:#aaa;font-size:15px}
+.stats{padding:8px 20px;background:#fff;border-top:1px solid #e0e0e0;display:flex;gap:20px;font-size:12px;color:#888;flex-wrap:wrap}
+.stats b{color:#2c3e50}
+.search-btn{position:fixed;top:16px;right:16px;padding:8px 16px;border:none;border-radius:8px;background:#4a90d9;color:#fff;cursor:pointer;font-size:14px;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.search-btn:hover{background:#357abd}
+.gs-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:flex-start;padding-top:60px}
+.gs-modal.active{display:flex}
+.gs-box{background:#fff;border-radius:12px;width:720px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.gs-header{padding:14px 20px;border-bottom:1px solid #e0e0e0;display:flex;gap:10px;align-items:center}
+.gs-header input{flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;outline:none}
+.gs-header input:focus{border-color:#4a90d9;box-shadow:0 0 0 2px rgba(74,144,217,0.2)}
+.gs-header button{padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:14px;background:#e0e0e0;color:#333}
+.gs-header button:hover{background:#ccc}
+.gs-scope{padding:8px 20px;border-bottom:1px solid #f0f0f0;display:flex;gap:8px;align-items:center;font-size:13px;color:#666}
+.gs-scope label{display:flex;align-items:center;gap:4px;cursor:pointer;padding:5px 12px;border-radius:6px;transition:all .15s;user-select:none}
+.gs-scope label:hover{background:#f0f0f0}
+.gs-scope input[type=radio]{margin:0;cursor:pointer}
+.gs-scope .scope-on{background:#e8f0fe;color:#1a73e8;font-weight:500}
+.gs-results{flex:1;overflow-y:auto;padding:8px}
+.gs-item{padding:12px 16px;border-radius:8px;cursor:pointer;transition:background .15s;border-bottom:1px solid #f0f0f0}
+.gs-item:hover{background:#f5f5f5}
+.gs-item-nutr{font-size:11px;color:#888;margin-bottom:3px}
+.gs-item-cust{font-size:12px;color:#666;margin-bottom:3px}
+.gs-item-msg{font-size:14px;color:#333;line-height:1.5}
+.gs-item-time{font-size:11px;color:#aaa;margin-top:3px}
+.gs-hl{background:#fff3cd;padding:1px 2px;border-radius:2px;font-weight:600}
+.gs-empty{padding:40px;text-align:center;color:#999;font-size:14px}
+.gs-stats{padding:8px 16px;background:#f8f8f8;border-top:1px solid #e0e0e0;font-size:12px;color:#888;text-align:center}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#555;border-radius:3px}
+</style></head><body>
+<div class="sidebar">
+ <div class="sidebar-header">
+ <h2>2026-07-30 聊天记录</h2>
+ <div class="sub" id="headerSub">加载中...</div>
+ </div>
+ <div class="search-box">
+ <input type="text" id="searchInput" placeholder="搜索客户ID或消息内容..." />
+ </div>
+ <div class="nutr-tabs" id="nutrTabs"></div>
+ <div class="conv-list" id="convList"></div>
+</div>
+<div class="main">
+ <div class="chat-header" id="chatHeader">
+ <div class="avatar cust" id="avEl">?</div>
+ <div class="info">
+ <h3 id="chatTitle">选择一个客户对话</h3>
+ <p id="chatSub">左侧列表点击客户查看</p>
+ </div>
+ </div>
+ <div class="chat-body" id="chatBody">
+ <div class="empty">← 选择营养师，然后点击客户查看聊天记录</div>
+ </div>
+ <div class="stats" id="statsBar"></div>
+</div>
+<button class="search-btn" onclick="openGS()">🔍 搜索</button>
+<div class="gs-modal" id="gsModal" onclick="if(event.target===this)closeGS()">
+ <div class="gs-box">
+ <div class="gs-header">
+ <input type="text" id="gsInput" placeholder="搜索聊天记录..." oninput="debounceGS()" />
+ <button onclick="closeGS()">关闭</button>
+ </div>
+ <div class="gs-scope" id="gsScope">
+ <span style="margin-right:4px">搜索范围:</span>
+ <label class="scope-on" id="lblGlobal"><input type="radio" name="gsScope" value="global" checked onchange="onScopeChange()"> 全局搜索</label>
+ <label id="lblCustomer"><input type="radio" name="gsScope" value="customer" onchange="onScopeChange()"> 当前客户</label>
+ </div>
+ <div class="gs-results" id="gsResults">
+ <div class="gs-empty">输入关键词搜索聊天记录</div>
+ </div>
+ <div class="gs-stats" id="gsStats"></div>
+ </div>
+</div>
+<script src="https://coze-coding-project.tos.coze.site/cli_attachment/2026-07-31/1347361971907959_0cb84636de6ee3700a8b656fbd0e9ff5_chat_view_2026-07-30_data.js?sign=1785566000-4698e29dea-0-c671f1a4863f81753be1e2b8e24a023e25df117d6369c6b8d988f13cb260a039"></script>
+<script src="https://coze-coding-project.tos.coze.site/cli_attachment/2026-07-31/1347361971907959_a52ed7ddf2a736d5912de4d9ba948e90_chat_viewer.js?sign=1785566002-18b4a80eb6-0-1b2b898a1c3a70c254f2a3797c1163a657605781bc9cbf4779e59d5f9da7d72c"></script>
+</body></html>
